@@ -1,5 +1,5 @@
 import { MapPin, DollarSign } from 'lucide-react';
-import { Post } from '../data/mockData';
+import { Post } from '../../lib/postModels';
 import { StarRating } from './StarRating';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 

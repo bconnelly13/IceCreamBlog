@@ -1,15 +1,13 @@
 import { IceCream2, Map, Settings } from 'lucide-react';
 
-type View = 'home' | 'map' | 'admin' | 'admin-new' | 'admin-edit' | 'post';
-
 interface NavBarProps {
-  currentView: View;
-  setView: (v: View) => void;
+  currentPath: string;
+  onNavigate: (path: string) => void;
   isAdmin: boolean;
 }
 
-export function NavBar({ currentView, setView, isAdmin }: NavBarProps) {
-  const isAdminArea = currentView === 'admin' || currentView === 'admin-new' || currentView === 'admin-edit';
+export function NavBar({ currentPath, onNavigate, isAdmin }: NavBarProps) {
+  const isAdminArea = currentPath.startsWith('/admin');
 
   return (
     <nav
@@ -19,21 +17,21 @@ export function NavBar({ currentView, setView, isAdmin }: NavBarProps) {
       <NavItem
         icon={<IceCream2 size={20} />}
         label="Feed"
-        active={currentView === 'home'}
-        onClick={() => setView('home')}
+        active={currentPath === '/'}
+        onClick={() => onNavigate('/')}
       />
       <NavItem
         icon={<Map size={20} />}
         label="Map"
-        active={currentView === 'map'}
-        onClick={() => setView('map')}
+        active={currentPath === '/map'}
+        onClick={() => onNavigate('/map')}
       />
       {isAdmin && (
         <NavItem
           icon={<Settings size={20} />}
           label="Admin"
           active={isAdminArea}
-          onClick={() => setView('admin')}
+          onClick={() => onNavigate('/admin')}
           accent
         />
       )}
