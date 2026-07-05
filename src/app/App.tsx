@@ -8,6 +8,7 @@ import { FilterBar } from "./components/FilterBar";
 import { AdminEditor } from "./components/AdminEditor";
 import { AdminList } from "./components/AdminList";
 import { LoginModal } from "./components/LoginModal";
+import { Feedback } from "./components/Feedback";
 import { IceCream2, LogIn, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchPosts, upsertPost } from "../lib/posts";
@@ -19,6 +20,7 @@ type RouteState = {
 type AppRoute =
   | { kind: "home" }
   | { kind: "map" }
+  | { kind: "feedback" }
   | { kind: "post"; postId: string }
   | { kind: "admin" }
   | { kind: "admin-editor"; postId?: string };
@@ -46,6 +48,7 @@ function readRouteFromLocation(): AppRoute {
   const state = (window.history.state ?? {}) as RouteState;
 
   if (path === "/map") return { kind: "map" };
+  if (path === "/feedback") return { kind: "feedback" };
   if (path.startsWith("/post/")) {
     const postId = decodeURIComponent(path.slice("/post/".length));
     return postId ? { kind: "post", postId } : { kind: "home" };
@@ -67,6 +70,8 @@ function routeToPath(route: AppRoute) {
       return "/";
     case "map":
       return "/map";
+    case "feedback":
+      return "/feedback";
     case "post":
       return `/post/${encodeURIComponent(route.postId)}`;
     case "admin":
@@ -87,6 +92,7 @@ export default function App() {
   const [flavorFilter, setFlavorFilter] = useState("");
   const [stateFilter, setStateFilter] = useState("");
   const [tagFilter, setTagFilter] = useState("");
+  const [starFilters, setStarFilters] = useState<number[]>([]);
   const [customTags, setCustomTags] = useState<string[]>([]);
 
   useEffect(() => {
@@ -199,9 +205,16 @@ export default function App() {
         const matchFlavor = !flavorFilter || p.flavors.includes(flavorFilter);
         const matchState = !stateFilter || p.state === stateFilter;
         const matchTag = !tagFilter || p.tags.includes(tagFilter);
-        return matchSearch && matchFlavor && matchState && matchTag;
+
+        // Calculate average rating
+        const ratingsVals = Object.values(p.ratings);
+        const avg = ratingsVals.reduce((a, b) => a + b, 0) / ratingsVals.length;
+        const starCount = Math.floor(avg);
+        const matchStars = starFilters.length === 0 || starFilters.includes(starCount);
+
+        return matchSearch && matchFlavor && matchState && matchTag && matchStars;
       }),
-    [posts, search, flavorFilter, stateFilter, tagFilter],
+    [posts, search, flavorFilter, stateFilter, tagFilter, starFilters],
   );
 
   async function handleLogout() {
@@ -236,6 +249,10 @@ export default function App() {
     }
     if (path === "/map") {
       navigate({ kind: "map" });
+      return;
+    }
+    if (path === "/feedback") {
+      navigate({ kind: "feedback" });
       return;
     }
     if (path === "/admin") {
@@ -359,6 +376,8 @@ export default function App() {
           </div>
         ) : (
           <main style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
+            {route.kind === "feedback" && <Feedback />}
+
             {route.kind === "home" && (
               <div>
                 <div className="px-4 pt-5 pb-2">
@@ -403,6 +422,8 @@ export default function App() {
                   setStateFilter={setStateFilter}
                   tagFilter={tagFilter}
                   setTagFilter={setTagFilter}
+                  starFilters={starFilters}
+                  setStarFilters={setStarFilters}
                   flavors={allFlavors}
                   states={allStates}
                   tags={allTags}
@@ -441,6 +462,7 @@ export default function App() {
                         setFlavorFilter("");
                         setStateFilter("");
                         setTagFilter("");
+                        setStarFilters([]);
                       }}
                       className="text-sm px-4 py-2 rounded-full"
                       style={{ background: "#FDE8EF", color: "#C1415A" }}

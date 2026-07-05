@@ -1,4 +1,4 @@
-import { IceCream2, Map, Settings } from "lucide-react";
+import { IceCream2, Map, Settings, MessageSquare } from "lucide-react";
 
 interface NavBarProps {
   currentPath: string;
@@ -25,6 +25,12 @@ export function NavBar({ currentPath, onNavigate, isAdmin }: NavBarProps) {
         label="Map"
         active={currentPath === "/map"}
         onClick={() => onNavigate("/map")}
+      />
+      <NavItem
+        icon={<MessageSquare size={20} />}
+        label="Feedback"
+        active={currentPath === "/feedback"}
+        onClick={() => onNavigate("/feedback")}
       />
       {isAdmin && (
         <NavItem
