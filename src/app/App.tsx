@@ -171,7 +171,7 @@ export default function App() {
   const selectedPost = useMemo(
     () =>
       route.kind === "post"
-        ? posts.find((p) => p.id === route.postId) ?? null
+        ? (posts.find((p) => p.id === route.postId) ?? null)
         : null,
     [posts, route],
   );
@@ -179,7 +179,7 @@ export default function App() {
   const editingPost = useMemo(
     () =>
       route.kind === "admin-editor" && route.postId
-        ? posts.find((p) => p.id === route.postId) ?? null
+        ? (posts.find((p) => p.id === route.postId) ?? null)
         : null,
     [posts, route],
   );
@@ -469,8 +469,8 @@ export default function App() {
               </div>
             )}
 
-            {(route.kind === "admin" || route.kind === "admin-editor") && (
-              isAdmin ? (
+            {(route.kind === "admin" || route.kind === "admin-editor") &&
+              (isAdmin ? (
                 route.kind === "admin" ? (
                   <AdminList
                     posts={posts}
@@ -514,8 +514,7 @@ export default function App() {
                     Sign in
                   </button>
                 </div>
-              )
-            )}
+              ))}
           </main>
         )}
 
