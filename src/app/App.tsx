@@ -11,7 +11,7 @@ import { LoginModal } from "./components/LoginModal";
 import { Feedback } from "./components/Feedback";
 import { IceCream2, LogIn, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { fetchPosts, upsertPost } from "../lib/posts";
+import { deletePost, fetchPosts, upsertPost } from "../lib/posts";
 
 type RouteState = {
   postId?: string;
@@ -236,6 +236,17 @@ export default function App() {
       setCustomTags((prev) => Array.from(new Set([...prev, ...newCustomTags])));
     }
     navigate({ kind: "admin" }, { replace: true });
+  }
+
+  async function handleDeletePost(post: Post) {
+    await deletePost(post.id);
+    setPosts((prev) => prev.filter((p) => p.id !== post.id));
+    if (route.kind === "post" && route.postId === post.id) {
+      navigate({ kind: "home" }, { replace: true });
+    }
+    if (route.kind === "admin-editor" && route.postId === post.id) {
+      navigate({ kind: "admin" }, { replace: true });
+    }
   }
 
   function handleNavigate(path: string) {
@@ -502,6 +513,7 @@ export default function App() {
                     onEditPost={(p) => {
                       navigate({ kind: "admin-editor", postId: p.id });
                     }}
+                    onDeletePost={handleDeletePost}
                   />
                 ) : (
                   <AdminEditor
