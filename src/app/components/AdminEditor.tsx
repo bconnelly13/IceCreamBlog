@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, ArrowLeft, Check, Star, Plus, Hash } from "lucide-react";
 import { Post, TAG_OPTIONS } from "../../lib/postModels";
+import { geocodeAddress } from "../../lib/geocode";
 import { PhotoUploader } from "./PhotoUploader";
 
 interface AdminEditorProps {
@@ -119,6 +120,7 @@ export function AdminEditor({
   );
   const [photos, setPhotos] = useState<string[]>(initialPost?.photos ?? []);
   const [errors, setErrors] = useState<string[]>([]);
+  const [publishing, setPublishing] = useState(false);
 
   const allPresetFlavors = [...PRESET_FLAVORS, ...extraFlavors];
   const COLLAPSED_COUNT = 12;
@@ -176,33 +178,49 @@ export function AdminEditor({
     return errs;
   }
 
-  function handlePublish() {
+  async function handlePublish() {
     const errs = validate();
     if (errs.length) {
       setErrors(errs);
       return;
     }
     setErrors([]);
-    const post: Post = {
-      id: draftPostId,
-      title: title.trim(),
-      shopName: shopName.trim(),
-      address: address.trim(),
-      city: city.trim(),
-      state: state.trim(),
-      lat: initialPost?.lat ?? 39.5,
-      lng: initialPost?.lng ?? -98.35,
-      date,
-      flavors,
-      price: parseFloat(price),
-      photos: photos.filter((u) => u.trim()),
-      ratings,
-      description: description.trim(),
-      tags,
-      reactions: initialPost?.reactions ?? [],
-      comments: initialPost?.comments ?? [],
-    };
-    onPublish(post, newCustomTags);
+    setPublishing(true);
+    try {
+      const { lat, lng } = await geocodeAddress({
+        street: address,
+        city,
+        state,
+      });
+      const post: Post = {
+        id: draftPostId,
+        title: title.trim(),
+        shopName: shopName.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        lat,
+        lng,
+        date,
+        flavors,
+        price: parseFloat(price),
+        photos: photos.filter((u) => u.trim()),
+        ratings,
+        description: description.trim(),
+        tags,
+        reactions: initialPost?.reactions ?? [],
+        comments: initialPost?.comments ?? [],
+      };
+      onPublish(post, newCustomTags);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not look up that address. Try again.";
+      setErrors([message]);
+    } finally {
+      setPublishing(false);
+    }
   }
 
   return (
@@ -507,10 +525,15 @@ export function AdminEditor({
 
         <button
           onClick={handlePublish}
-          className="w-full py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 active:scale-[0.99]"
+          disabled={publishing}
+          className="w-full py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-60"
           style={{ background: "#C1415A", color: "#fff" }}
         >
-          {isEdit ? "Save Changes 🍦" : "Publish Post 🍦"}
+          {publishing
+            ? "Looking up address…"
+            : isEdit
+              ? "Save Changes 🍦"
+              : "Publish Post 🍦"}
         </button>
       </div>
     </div>
