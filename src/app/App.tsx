@@ -192,28 +192,30 @@ export default function App() {
 
   const filteredPosts = useMemo(
     () =>
-      posts.filter((p) => {
-        const q = search.toLowerCase();
-        const matchSearch =
-          !q ||
-          p.title.toLowerCase().includes(q) ||
-          p.shopName.toLowerCase().includes(q) ||
-          p.city.toLowerCase().includes(q) ||
-          p.flavors.some((f) => f.toLowerCase().includes(q)) ||
-          p.tags.some((t) => t.toLowerCase().includes(q)) ||
-          p.description.toLowerCase().includes(q);
-        const matchFlavor = !flavorFilter || p.flavors.includes(flavorFilter);
-        const matchState = !stateFilter || p.state === stateFilter;
-        const matchTag = !tagFilter || p.tags.includes(tagFilter);
+      posts
+        .filter((p) => {
+          const q = search.toLowerCase();
+          const matchSearch =
+            !q ||
+            p.title.toLowerCase().includes(q) ||
+            p.shopName.toLowerCase().includes(q) ||
+            p.city.toLowerCase().includes(q) ||
+            p.flavors.some((f) => f.toLowerCase().includes(q)) ||
+            p.tags.some((t) => t.toLowerCase().includes(q)) ||
+            p.description.toLowerCase().includes(q);
+          const matchFlavor = !flavorFilter || p.flavors.includes(flavorFilter);
+          const matchState = !stateFilter || p.state === stateFilter;
+          const matchTag = !tagFilter || p.tags.includes(tagFilter);
 
-        // Calculate average rating
-        const ratingsVals = Object.values(p.ratings);
-        const avg = ratingsVals.reduce((a, b) => a + b, 0) / ratingsVals.length;
-        const starCount = Math.floor(avg);
-        const matchStars = starFilters.length === 0 || starFilters.includes(starCount);
+          // Calculate average rating
+          const ratingsVals = Object.values(p.ratings);
+          const avg = ratingsVals.reduce((a, b) => a + b, 0) / ratingsVals.length;
+          const starCount = Math.floor(avg);
+          const matchStars = starFilters.length === 0 || starFilters.includes(starCount);
 
-        return matchSearch && matchFlavor && matchState && matchTag && matchStars;
-      }),
+          return matchSearch && matchFlavor && matchState && matchTag && matchStars;
+        })
+        .sort((a, b) => b.date.localeCompare(a.date)),
     [posts, search, flavorFilter, stateFilter, tagFilter, starFilters],
   );
 
@@ -366,7 +368,22 @@ export default function App() {
               minHeight: 0,
             }}
           >
-            <MapView posts={posts} onPostClick={openPost} />
+            <FilterBar
+              search={search}
+              setSearch={setSearch}
+              flavorFilter={flavorFilter}
+              setFlavorFilter={setFlavorFilter}
+              stateFilter={stateFilter}
+              setStateFilter={setStateFilter}
+              tagFilter={tagFilter}
+              setTagFilter={setTagFilter}
+              starFilters={starFilters}
+              setStarFilters={setStarFilters}
+              flavors={allFlavors}
+              states={allStates}
+              tags={allTags}
+            />
+            <MapView posts={filteredPosts} onPostClick={openPost} />
           </div>
         ) : route.kind === "post" ? (
           <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>

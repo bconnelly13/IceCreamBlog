@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { Post } from "../../lib/postModels";
@@ -13,9 +13,14 @@ function avgRating(r: Post["ratings"]) {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-function createIceCreamIcon(rating: number) {
-  const color =
-    rating >= 4.5 ? "#C1415A" : rating >= 3.5 ? "#F59340" : "#8B6558";
+function createIceCreamIcon(rating: number, isMultiple?: boolean) {
+  const color = isMultiple
+    ? "#888888"
+    : rating >= 4.5
+      ? "#C1415A"
+      : rating >= 3.5
+        ? "#F59340"
+        : "#8B6558";
   return L.divIcon({
     className: "",
     html: `<div style="
@@ -50,12 +55,131 @@ function MapResizer() {
   return null;
 }
 
+function PostItem({
+  post,
+  onPostClick,
+  isLast,
+}: {
+  post: Post;
+  onPostClick: (post: Post) => void;
+  isLast?: boolean;
+}) {
+  const avg = avgRating(post.ratings);
+  return (
+    <div
+      style={{
+        borderBottom: isLast ? "none" : "1px solid #F5EAE0",
+        paddingBottom: isLast ? 0 : 8,
+      }}
+    >
+      <p
+        style={{
+          fontWeight: 700,
+          fontSize: 13,
+          color: "#C1415A",
+          marginBottom: 2,
+        }}
+      >
+        {post.shopName}
+      </p>
+      <p
+        style={{
+          fontSize: 11,
+          color: "#1C0E0A",
+          marginBottom: 2,
+          fontStyle: "italic",
+          lineHeight: 1.3,
+        }}
+      >
+        {post.title}
+      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          marginBottom: 6,
+        }}
+      >
+        {[1, 2, 3, 4, 5].map((i) => (
+          <span
+            key={i}
+            style={{
+              color: i <= Math.round(avg) ? "#F59340" : "#D4B5A8",
+              fontSize: 11,
+            }}
+          >
+            ★
+          </span>
+        ))}
+        <span
+          style={{
+            fontSize: 10,
+            color: "#8B6558",
+            marginLeft: 2,
+          }}
+        >
+          {avg.toFixed(1)}
+        </span>
+      </div>
+      <button
+        onClick={() => onPostClick(post)}
+        style={{
+          background: "#C1415A",
+          color: "#fff",
+          border: "none",
+          borderRadius: 8,
+          padding: "5px 10px",
+          fontSize: 11,
+          fontWeight: 600,
+          cursor: "pointer",
+          width: "100%",
+          fontFamily: "var(--font-body)",
+        }}
+      >
+        Read post →
+      </button>
+    </div>
+  );
+}
+
 export function MapView({ posts, onPostClick }: MapViewProps) {
   useEffect(() => {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
   }, []);
 
   const center: [number, number] = [39.5, -98.35];
+
+  // Group posts by address, city, state
+  const groupedLocations = useMemo(() => {
+    const groups: {
+      [key: string]: {
+        address: string;
+        city: string;
+        state: string;
+        lat: number;
+        lng: number;
+        posts: Post[];
+      };
+    } = {};
+
+    posts.forEach((post) => {
+      const key = `${post.address.toLowerCase().trim()}|${post.city.toLowerCase().trim()}|${post.state.toLowerCase().trim()}`;
+      if (!groups[key]) {
+        groups[key] = {
+          address: post.address,
+          city: post.city,
+          state: post.state,
+          lat: post.lat,
+          lng: post.lng,
+          posts: [],
+        };
+      }
+      groups[key].posts.push(post);
+    });
+
+    return Object.values(groups);
+  }, [posts]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -75,8 +199,8 @@ export function MapView({ posts, onPostClick }: MapViewProps) {
           Ice Cream Map
         </h2>
         <p style={{ fontSize: 13, color: "#8B6558", marginTop: 2 }}>
-          {posts.length} location{posts.length !== 1 ? "s" : ""} · tap a pin to
-          explore
+          {groupedLocations.length} location
+          {groupedLocations.length !== 1 ? "s" : ""} · tap a pin to explore
         </p>
       </div>
 
@@ -98,99 +222,145 @@ export function MapView({ posts, onPostClick }: MapViewProps) {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {posts.map((post) => {
-            const avg = avgRating(post.ratings);
+          {groupedLocations.map((group) => {
+            const isMultiple = group.posts.length > 1;
+            const singlePost = group.posts[0];
+            const avg = isMultiple ? 0 : avgRating(singlePost.ratings);
+
             return (
               <Marker
-                key={post.id}
-                position={[post.lat, post.lng]}
-                icon={createIceCreamIcon(avg)}
+                key={group.address + group.city + group.state}
+                position={[group.lat, group.lng]}
+                icon={createIceCreamIcon(avg, isMultiple)}
               >
                 <Popup closeButton={false} className="ice-cream-popup">
-                  <div
-                    style={{
-                      minWidth: 190,
-                      fontFamily: "var(--font-body)",
-                      padding: "4px 0",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontWeight: 700,
-                        fontSize: 13,
-                        color: "#C1415A",
-                        marginBottom: 3,
-                      }}
-                    >
-                      {post.shopName}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: "#1C0E0A",
-                        marginBottom: 3,
-                        fontStyle: "italic",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {post.title}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 11,
-                        color: "#8B6558",
-                        marginBottom: 6,
-                      }}
-                    >
-                      {post.city}, {post.state}
-                    </p>
+                  {!isMultiple ? (
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        marginBottom: 10,
+                        minWidth: 190,
+                        fontFamily: "var(--font-body)",
+                        padding: "4px 0",
                       }}
                     >
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <span
-                          key={i}
-                          style={{
-                            color: i <= Math.round(avg) ? "#F59340" : "#D4B5A8",
-                            fontSize: 13,
-                          }}
-                        >
-                          ★
-                        </span>
-                      ))}
-                      <span
+                      <p
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 13,
+                          color: "#C1415A",
+                          marginBottom: 3,
+                        }}
+                      >
+                        {singlePost.shopName}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "#1C0E0A",
+                          marginBottom: 3,
+                          fontStyle: "italic",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {singlePost.title}
+                      </p>
+                      <p
                         style={{
                           fontSize: 11,
                           color: "#8B6558",
-                          marginLeft: 2,
+                          marginBottom: 6,
                         }}
                       >
-                        {avg.toFixed(1)}
-                      </span>
+                        {singlePost.city}, {singlePost.state}
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          marginBottom: 10,
+                        }}
+                      >
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <span
+                            key={i}
+                            style={{
+                              color:
+                                i <= Math.round(avg) ? "#F59340" : "#D4B5A8",
+                              fontSize: 13,
+                            }}
+                          >
+                            ★
+                          </span>
+                        ))}
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: "#8B6558",
+                            marginLeft: 2,
+                          }}
+                        >
+                          {avg.toFixed(1)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => onPostClick(singlePost)}
+                        style={{
+                          background: "#C1415A",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 10,
+                          padding: "7px 14px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          width: "100%",
+                          fontFamily: "var(--font-body)",
+                        }}
+                      >
+                        Read post →
+                      </button>
                     </div>
-                    <button
-                      onClick={() => onPostClick(post)}
+                  ) : (
+                    <div
                       style={{
-                        background: "#C1415A",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 10,
-                        padding: "7px 14px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        width: "100%",
+                        minWidth: 200,
+                        maxHeight: 300,
                         fontFamily: "var(--font-body)",
+                        padding: "0px 0",
                       }}
                     >
-                      Read post →
-                    </button>
-                  </div>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          color: "#8B6558",
+                          marginBottom: 8,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {group.city}, {group.state} · {group.posts.length} posts
+                      </p>
+                      <div
+                        className="posts-scroll-container"
+                        style={{
+                          maxHeight: 200,
+                          overflowY: "auto",
+                          paddingRight: 4,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
+                        {group.posts.map((post, idx) => (
+                          <PostItem
+                            key={post.id}
+                            post={post}
+                            onPostClick={onPostClick}
+                            // isLast={idx === group.posts.length}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </Popup>
               </Marker>
             );
@@ -206,6 +376,7 @@ export function MapView({ posts, onPostClick }: MapViewProps) {
         <LegendItem color="#C1415A" label="4.5+ stars" />
         <LegendItem color="#F59340" label="3.5–4.4 stars" />
         <LegendItem color="#8B6558" label="Below 3.5" />
+        <LegendItem color="#888888" label="Multiple" />
       </div>
     </div>
   );

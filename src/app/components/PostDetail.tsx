@@ -109,11 +109,17 @@ export function PostDetail({
           flexShrink: 0,
         }}
       >
-        <ImageWithFallback
-          src={post.photos[photoIdx]}
-          alt={post.title}
-          className="w-full h-full object-cover"
-        />
+        {post.photos[photoIdx] ? (
+          <ImageWithFallback
+            src={post.photos[photoIdx]}
+            alt={post.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span style={{ fontSize: 200 }}>🍦</span>
+          </div>
+        )}
         <button
           onClick={onBack}
           className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 rounded-full"

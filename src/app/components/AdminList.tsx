@@ -93,8 +93,10 @@ export function AdminList({
             </p>
           </div>
         )}
-        {posts.map((post) => {
-          const avg = avgRating(post.ratings);
+        {[...posts]
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .map((post) => {
+            const avg = avgRating(post.ratings);
           const date = new Date(post.date).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
@@ -124,7 +126,7 @@ export function AdminList({
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span style={{ fontSize: 28 }}>🍦</span>
+                      <span style={{ fontSize: 40 }}>🍦</span>
                     </div>
                   )}
                 </div>
@@ -166,7 +168,11 @@ export function AdminList({
                     </span>
                     <span
                       className="flex items-center gap-0.5"
-                      style={{ fontSize: 11, color: "#F59340", fontWeight: 600 }}
+                      style={{
+                        fontSize: 11,
+                        color: "#F59340",
+                        fontWeight: 600,
+                      }}
                     >
                       <Star size={10} fill="#F59340" color="#F59340" />
                       {avg.toFixed(1)}

@@ -2,3 +2,32 @@
 @import './tailwind.css';
 @import './theme.css';
 @import 'leaflet/dist/leaflet.css';
+
+/* Custom styling for ice cream map popups */
+.ice-cream-popup .leaflet-popup-content-wrapper {
+  overflow: hidden !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.ice-cream-popup .leaflet-popup-content {
+  margin: 12px 16px !important;
+  width: auto !important;
+  overflow: visible !important;
+}
+
+/* Custom scrollbar for our posts container */
+.posts-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+.posts-scroll-container::-webkit-scrollbar-track {
+  background: #F5EAE0;
+  border-radius: 4px;
+}
+.posts-scroll-container::-webkit-scrollbar-thumb {
+  background: #C1415A;
+  border-radius: 4px;
+}
+.posts-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #a33248;
+}
