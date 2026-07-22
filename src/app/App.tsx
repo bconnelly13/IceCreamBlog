@@ -362,7 +362,7 @@ export default function App() {
           <div
             style={{
               flex: 1,
-              overflow: "hidden",
+              overflowY: "auto",
               display: "flex",
               flexDirection: "column",
               minHeight: 0,
@@ -383,7 +383,9 @@ export default function App() {
               states={allStates}
               tags={allTags}
             />
-            <MapView posts={filteredPosts} onPostClick={openPost} />
+            <div style={{ height: "70vh", flexShrink: 0 }}>
+              <MapView posts={filteredPosts} onPostClick={openPost} />
+            </div>
           </div>
         ) : route.kind === "post" ? (
           <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
