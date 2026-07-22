@@ -1,0 +1,5 @@
+# Minimal Supabase project config for Edge Functions.
+# Run `supabase link` to connect to your remote project before deploying.
+
+[functions.geocode]
+verify_jwt = true
