@@ -187,11 +187,14 @@ export function AdminEditor({
     setErrors([]);
     setPublishing(true);
     try {
-      const { lat, lng } = await geocodeAddress({
-        street: address,
-        city,
-        state,
-      });
+      let { lat, lng } = initialPost ?? {};
+      if (
+        initialPost?.address != address ||
+        initialPost?.city != city ||
+        initialPost?.state != state
+      ) {
+        ({ lat, lng } = await geocodeAddress({ street: address, city, state }));
+      }
       const post: Post = {
         id: draftPostId,
         title: title.trim(),
