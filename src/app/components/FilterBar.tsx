@@ -1,6 +1,6 @@
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { useState } from 'react';
-import { CustomSelect } from './CustomSelect';
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import { useState } from "react";
+import { CustomSelect } from "./CustomSelect";
 
 interface FilterBarProps {
   search: string;
@@ -19,16 +19,28 @@ interface FilterBarProps {
 }
 
 export function FilterBar({
-  search, setSearch,
-  flavorFilter, setFlavorFilter,
-  stateFilter, setStateFilter,
-  tagFilter, setTagFilter,
-  starFilters, setStarFilters,
-  flavors, states, tags,
+  search,
+  setSearch,
+  flavorFilter,
+  setFlavorFilter,
+  stateFilter,
+  setStateFilter,
+  tagFilter,
+  setTagFilter,
+  starFilters,
+  setStarFilters,
+  flavors,
+  states,
+  tags,
 }: FilterBarProps) {
   const [showFilters, setShowFilters] = useState(false);
-  const hasActiveFilters = !!(flavorFilter || stateFilter || starFilters.length > 0);
-  const activeCount = [flavorFilter, stateFilter].filter(Boolean).length + starFilters.length;
+  const hasActiveFilters = !!(
+    flavorFilter ||
+    stateFilter ||
+    starFilters.length > 0
+  );
+  const activeCount =
+    [flavorFilter, stateFilter].filter(Boolean).length + starFilters.length;
 
   return (
     <div className="px-4 py-3 space-y-3">
@@ -173,7 +185,7 @@ export function FilterBar({
           {tags.length > 0 && (
             <div
               className="flex gap-2 overflow-x-auto pb-1"
-              style={{ scrollbarWidth: "none" }}
+              style={{ scrollbarWidth: "thin" }}
             >
               <HashChip
                 label="All"
@@ -196,15 +208,23 @@ export function FilterBar({
   );
 }
 
-function HashChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function HashChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
       className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
       style={{
-        background: active ? '#1C0E0A' : '#F5EAE0',
-        color: active ? '#FFF8F2' : '#8B6558',
-        whiteSpace: 'nowrap',
+        background: active ? "#1C0E0A" : "#F5EAE0",
+        color: active ? "#FFF8F2" : "#8B6558",
+        whiteSpace: "nowrap",
       }}
     >
       {label}
