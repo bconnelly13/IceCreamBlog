@@ -9,6 +9,7 @@ import { AdminEditor } from "./components/AdminEditor";
 import { AdminList } from "./components/AdminList";
 import { LoginModal } from "./components/LoginModal";
 import { Feedback } from "./components/Feedback";
+import { ResetPassword } from "./components/ResetPassword";
 import { IceCream2, LogIn, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { deletePost, fetchPosts, upsertPost } from "../lib/posts";
@@ -23,7 +24,8 @@ type AppRoute =
   | { kind: "feedback" }
   | { kind: "post"; postId: string }
   | { kind: "admin" }
-  | { kind: "admin-editor"; postId?: string };
+  | { kind: "admin-editor"; postId?: string }
+  | { kind: "reset-password" };
 
 const ADMIN_EDITOR_SESSION_KEY = "icecreamblog.admin-editor-post-id";
 
@@ -49,6 +51,7 @@ function readRouteFromLocation(): AppRoute {
 
   if (path === "/map") return { kind: "map" };
   if (path === "/feedback") return { kind: "feedback" };
+  if (path === "/reset-password") return { kind: "reset-password" };
   if (path.startsWith("/post/")) {
     const postId = decodeURIComponent(path.slice("/post/".length));
     return postId ? { kind: "post", postId } : { kind: "home" };
@@ -72,6 +75,8 @@ function routeToPath(route: AppRoute) {
       return "/map";
     case "feedback":
       return "/feedback";
+    case "reset-password":
+      return "/reset-password";
     case "post":
       return `/post/${encodeURIComponent(route.postId)}`;
     case "admin":
@@ -209,11 +214,15 @@ export default function App() {
 
           // Calculate average rating
           const ratingsVals = Object.values(p.ratings);
-          const avg = ratingsVals.reduce((a, b) => a + b, 0) / ratingsVals.length;
+          const avg =
+            ratingsVals.reduce((a, b) => a + b, 0) / ratingsVals.length;
           const starCount = Math.floor(avg);
-          const matchStars = starFilters.length === 0 || starFilters.includes(starCount);
+          const matchStars =
+            starFilters.length === 0 || starFilters.includes(starCount);
 
-          return matchSearch && matchFlavor && matchState && matchTag && matchStars;
+          return (
+            matchSearch && matchFlavor && matchState && matchTag && matchStars
+          );
         })
         .sort((a, b) => b.date.localeCompare(a.date)),
     [posts, search, flavorFilter, stateFilter, tagFilter, starFilters],
@@ -407,6 +416,14 @@ export default function App() {
         ) : (
           <main style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
             {route.kind === "feedback" && <Feedback />}
+
+            {route.kind === "reset-password" && (
+              <ResetPassword
+                onSuccess={() => {
+                  navigate({ kind: "home" }, { replace: true });
+                }}
+              />
+            )}
 
             {route.kind === "home" && (
               <div>
