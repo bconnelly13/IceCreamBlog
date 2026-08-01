@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, ArrowLeft, Check, Star, Plus, Hash } from "lucide-react";
-import { Post, TAG_OPTIONS } from "../../lib/postModels";
+import { Post } from "../../lib/postModels";
 import { geocodeAddress } from "../../lib/geocode";
 import { PhotoUploader } from "./PhotoUploader";
 
 interface AdminEditorProps {
   initialPost?: Post;
+  allFlavors: string[];
   allTags: string[];
   onPublish: (post: Post, newCustomTags?: string[]) => void;
   onCancel: () => void;
@@ -18,33 +19,6 @@ const RATING_KEYS: RatingKey[] = [
   "location",
   "value",
   "presentation",
-];
-
-const PRESET_FLAVORS = [
-  "Brambleberry Crisp",
-  "Brown Butter Almond Brittle",
-  "Honey Lavender",
-  "Sea Salt with Caramel Ribbons",
-  "Black Coconut Ash",
-  "New York Cheesecake",
-  "Turkish Coffee",
-  "Eureka Lemon & Marionberry",
-  "The Munchies",
-  "Ooey Gooey Butter Cake",
-  "Secret Breakfast",
-  "Blue Bottle Vietnamese Coffee",
-  "Strawberry Balsamic",
-  "Toasted Coconut",
-  "Miso Cherry",
-  "Everything Bagel",
-  "Vanilla Bean",
-  "Chocolate Fudge",
-  "Strawberry",
-  "Mint Chip",
-  "Rocky Road",
-  "Cookies & Cream",
-  "Salted Caramel",
-  "Pistachio",
 ];
 
 function StarPicker({
@@ -80,6 +54,7 @@ function StarPicker({
 
 export function AdminEditor({
   initialPost,
+  allFlavors,
   allTags,
   onPublish,
   onCancel,
@@ -98,10 +73,7 @@ export function AdminEditor({
   const [price, setPrice] = useState(initialPost?.price?.toString() ?? "");
   const [flavors, setFlavors] = useState<string[]>(initialPost?.flavors ?? []);
   const [customFlavor, setCustomFlavor] = useState("");
-  const [extraFlavors, setExtraFlavors] = useState<string[]>(() => {
-    if (!initialPost) return [];
-    return initialPost.flavors.filter((f) => !PRESET_FLAVORS.includes(f));
-  });
+  const [extraFlavors, setExtraFlavors] = useState<string[]>([]);
   const [showAllFlavors, setShowAllFlavors] = useState(false);
   const [description, setDescription] = useState(
     initialPost?.description ?? "",
@@ -122,12 +94,23 @@ export function AdminEditor({
   const [errors, setErrors] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
 
-  const allPresetFlavors = [...PRESET_FLAVORS, ...extraFlavors];
+  useEffect(() => {
+    if (!initialPost) {
+      setExtraFlavors([]);
+      return;
+    }
+
+    setExtraFlavors(
+      initialPost.flavors.filter((flavor) => !allFlavors.includes(flavor)),
+    );
+  }, [allFlavors, initialPost]);
+
+  const allAvailableFlavors = [...new Set([...allFlavors, ...extraFlavors])];
   const COLLAPSED_COUNT = 12;
   const flavorRows = showAllFlavors
-    ? allPresetFlavors
-    : allPresetFlavors.slice(0, COLLAPSED_COUNT);
-  const hasMore = allPresetFlavors.length > COLLAPSED_COUNT;
+    ? allAvailableFlavors
+    : allAvailableFlavors.slice(0, COLLAPSED_COUNT);
+  const hasMore = allAvailableFlavors.length > COLLAPSED_COUNT;
 
   function toggleFlavor(f: string) {
     setFlavors((prev) =>
@@ -138,7 +121,7 @@ export function AdminEditor({
   function addCustomFlavor() {
     const f = customFlavor.trim();
     if (!f) return;
-    if (!PRESET_FLAVORS.includes(f) && !extraFlavors.includes(f)) {
+    if (!allFlavors.includes(f) && !extraFlavors.includes(f)) {
       setExtraFlavors((prev) => [...prev, f]);
     }
     if (!flavors.includes(f)) setFlavors((prev) => [...prev, f]);
@@ -393,7 +376,7 @@ export function AdminEditor({
             >
               {showAllFlavors
                 ? "↑ Show less"
-                : `↓ Show all ${allPresetFlavors.length} flavors`}
+                : `↓ Show all ${allAvailableFlavors.length} flavors`}
             </button>
           )}
 

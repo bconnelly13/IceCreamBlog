@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Post, TAG_OPTIONS } from "../lib/postModels";
+import { Post } from "../lib/postModels";
 import { NavBar } from "./components/NavBar";
 import { PostCard } from "./components/PostCard";
 import { PostDetail } from "./components/PostDetail";
@@ -12,7 +12,13 @@ import { Feedback } from "./components/Feedback";
 import { ResetPassword } from "./components/ResetPassword";
 import { IceCream2, LogIn, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { deletePost, fetchPosts, upsertPost } from "../lib/posts";
+import {
+  deletePost,
+  fetchFlavorOptions,
+  fetchPosts,
+  fetchTagOptions,
+  upsertPost,
+} from "../lib/posts";
 
 type RouteState = {
   postId?: string;
@@ -98,7 +104,8 @@ export default function App() {
   const [stateFilter, setStateFilter] = useState("");
   const [tagFilter, setTagFilter] = useState("");
   const [starFilters, setStarFilters] = useState<number[]>([]);
-  const [customTags, setCustomTags] = useState<string[]>([]);
+  const [flavorOptions, setFlavorOptions] = useState<string[]>([]);
+  const [tagOptions, setTagOptions] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -107,9 +114,15 @@ export default function App() {
       try {
         setLoadError("");
         setLoadingPosts(true);
-        const nextPosts = await fetchPosts();
+        const [nextPosts, nextFlavors, nextTags] = await Promise.all([
+          fetchPosts(),
+          fetchFlavorOptions(),
+          fetchTagOptions(),
+        ]);
         if (!active) return;
         setPosts(nextPosts);
+        setFlavorOptions(nextFlavors);
+        setTagOptions(nextTags);
       } catch (error) {
         if (!active) return;
         setLoadError(
@@ -127,16 +140,9 @@ export default function App() {
     };
   }, []);
 
-  const allTags = useMemo(
-    () => Array.from(new Set([...TAG_OPTIONS, ...customTags])).sort(),
-    [customTags],
-  );
+  const allTags = useMemo(() => tagOptions, [tagOptions]);
 
-  const allFlavors = useMemo(() => {
-    const set = new Set<string>();
-    posts.forEach((p) => p.flavors.forEach((f) => set.add(f)));
-    return Array.from(set).sort();
-  }, [posts]);
+  const allFlavors = useMemo(() => flavorOptions, [flavorOptions]);
 
   const allStates = useMemo(
     () => Array.from(new Set(posts.map((p) => p.state))).sort(),
@@ -241,17 +247,27 @@ export default function App() {
 
   async function handlePublish(post: Post, newCustomTags?: string[]) {
     await upsertPost(post);
-    const nextPosts = await fetchPosts();
+    const [nextPosts, nextFlavors, nextTags] = await Promise.all([
+      fetchPosts(),
+      fetchFlavorOptions(),
+      fetchTagOptions(),
+    ]);
     setPosts(nextPosts);
-    if (newCustomTags?.length) {
-      setCustomTags((prev) => Array.from(new Set([...prev, ...newCustomTags])));
-    }
+    setFlavorOptions(nextFlavors);
+    setTagOptions(nextTags);
     navigate({ kind: "admin" }, { replace: true });
   }
 
   async function handleDeletePost(post: Post) {
     await deletePost(post.id);
-    setPosts((prev) => prev.filter((p) => p.id !== post.id));
+    const [nextPosts, nextFlavors, nextTags] = await Promise.all([
+      fetchPosts(),
+      fetchFlavorOptions(),
+      fetchTagOptions(),
+    ]);
+    setPosts(nextPosts);
+    setFlavorOptions(nextFlavors);
+    setTagOptions(nextTags);
     if (route.kind === "post" && route.postId === post.id) {
       navigate({ kind: "home" }, { replace: true });
     }
@@ -555,6 +571,7 @@ export default function App() {
                   <AdminEditor
                     key={editingPost?.id ?? "new"}
                     initialPost={editingPost ?? undefined}
+                    allFlavors={allFlavors}
                     allTags={allTags}
                     onPublish={handlePublish}
                     onCancel={() => navigate({ kind: "admin" })}

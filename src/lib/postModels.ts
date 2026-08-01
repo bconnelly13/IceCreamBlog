@@ -34,16 +34,3 @@ export interface Post {
   reactions: { emoji: string; count: number }[];
   comments: Comment[];
 }
-
-export const FLAVOR_OPTIONS = [
-  'Brambleberry Crisp', 'Brown Butter Almond Brittle', 'Honey Lavender',
-  'Sea Salt with Caramel Ribbons', 'Black Coconut Ash', 'New York Cheesecake',
-  'Turkish Coffee', 'Eureka Lemon & Marionberry', 'The Munchies',
-  'Ooey Gooey Butter Cake', 'Secret Breakfast', 'Blue Bottle Vietnamese Coffee',
-  'Strawberry Balsamic', 'Toasted Coconut', 'Miso Cherry', 'Everything Bagel',
-];
-
-export const TAG_OPTIONS = [
-  'artisan', 'fruit', 'nutty', 'coffee', 'floral', 'boozy', 'savory',
-  'sweet-salty', 'must-visit', 'splurge', 'instagrammable', 'outdoor',
-];
